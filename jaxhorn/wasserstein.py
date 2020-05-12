@@ -3,20 +3,23 @@ import numpy as np
 from sinkhorn import sinkhorn, sinkhorn_log
 
 
-def w2_euclidean(a, b, a_weights, b_weights, reg):
+def w2_euclidean(a, b, a_weights, b_weights, reg, tol=1e-6, grad_iters=10):
     dists = -2 * a @ b.T
     dists = dists + np.einsum('ij,ij->i', a, a)[...,None]
     dists = dists + np.einsum('ij,ij->i', b, b)[...,None,:]
-    K, u, v = sinkhorn(-dists, a_weights, b_weights, reg)
+    K, u, v = sinkhorn(
+        -dists, a_weights, b_weights, reg,
+        tol=tol, grad_iters=grad_iters)
     return np.sqrt(np.einsum(
         'ij,ij,i,j->', K, dists, u, v))
 
-def w2_euclidean_log(a, b, a_log_weights, b_log_weights, reg):
+def w2_euclidean_log(a, b, a_log_weights, b_log_weights, reg, tol=1e-6, grad_iters=10):
     dists = -2 * a @ b.T
     dists = dists + np.einsum('ij,ij->i', a, a)[...,None]
     dists = dists + np.einsum('ij,ij->i', b, b)[...,None,:]
     log_K, log_u, log_v = sinkhorn_log(
-        -dists, a_log_weights, b_log_weights, reg)
+        -dists, a_log_weights, b_log_weights, reg,
+        tol=tol, grad_iters=grad_iters)
     P = np.exp(log_K + log_u[...,None] + log_v[...,None,:])
     return np.sqrt(np.einsum('ij,ij', P, dists))
 
