@@ -1,4 +1,4 @@
-import numpy as np
+import jax.numpy as np
 
 from sinkhorn import sinkhorn, sinkhorn_log
 
@@ -13,7 +13,8 @@ def w2_euclidean(a, b, a_weights, b_weights, reg, tol=1e-6, grad_iters=10):
     return np.sqrt(np.einsum(
         'ij,ij,i,j->', K, dists, u, v))
 
-def w2_euclidean_log(a, b, a_log_weights, b_log_weights, reg, tol=1e-6, grad_iters=10):
+def w2_euclidean_log(
+    a, b, a_log_weights, b_log_weights, reg, tol=1e-6, grad_iters=10):
     dists = -2 * a @ b.T
     dists = dists + np.einsum('ij,ij->i', a, a)[...,None]
     dists = dists + np.einsum('ij,ij->i', b, b)[...,None,:]
