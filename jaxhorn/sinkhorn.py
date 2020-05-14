@@ -19,7 +19,9 @@ def _sinkhorn_until_convergence(K, a, b, tol):
         distsq = (right_marginal @ right_marginal
                   + b @ b
                   - 2 * right_marginal @ b)
-        return distsq > tol * tol * b.shape[-1]
+        result = distsq > tol * tol * b.shape[-1]
+        print(result.shape)
+        return result
 
     def body(arg):
         u, v = arg
@@ -30,9 +32,11 @@ def _sinkhorn_until_convergence(K, a, b, tol):
     return found_u, found_v
 
 
-def sinkhorn(M, a, b, reg, tol=1e-6, grad_iters=10):
+def sinkhorn(M, a, b, reg, tol=1e-6, grad_iters=100):
     K = np.exp(M / reg)
-    u, v = jax.lax.stop_gradient(_sinkhorn_until_convergence(K, a, b, tol))
+    u = np.full_like(a, 1. / a.shape[-1])
+    v = np.full_like(b, 1. / b.shape[-1])
+    # u, v = jax.lax.stop_gradient(_sinkhorn_until_convergence(K, a, b, tol))
     for _ in range(grad_iters):
         u, v = _sinkhorn_iteration(K, a, b, u, v)
     return K, u, v
@@ -81,10 +85,12 @@ def _sinkhorn_until_convergence_log(log_K, log_a, log_b, tol):
     return found_log_u, found_log_v
 
 
-def sinkhorn_log(M, log_a, log_b, reg, tol=1e-6, grad_iters=1000):
+def sinkhorn_log(M, log_a, log_b, reg, tol=1e-6, grad_iters=100):
     log_K = M / reg
-    log_u, log_v = jax.lax.stop_gradient(_sinkhorn_until_convergence_log(
-        log_K, log_a, log_b, tol))
+    log_u = np.full_like(log_a, -np.log(log_a.shape[-1]))
+    log_v = np.full_like(log_b, -np.log(log_b.shape[-1]))
+    # log_u, log_v = jax.lax.stop_gradient(_sinkhorn_until_convergence_log(
+    #     log_K, log_a, log_b, tol))
     for _ in range(grad_iters):
         log_u, log_v = _sinkhorn_iteration_log(log_K, log_a, log_b, log_u, log_v)
     return log_K, log_u, log_v
